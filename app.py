@@ -14,8 +14,36 @@
 # 5. In your terminal, navigate to the folder where you saved the file.
 # 6. Run the command:
 #    streamlit run app.py
-
 import streamlit as st
+
+# -----------------------------
+# 🔐 SIMPLE LOGIN (NO CHANGES TO YOUR CODE)
+# -----------------------------
+def check_password():
+    """Secure login using Streamlit secrets."""
+    def verify():
+        if (
+            st.session_state.get("username") == st.secrets["login"]["username"]
+            and st.session_state.get("password") == st.secrets["login"]["password"]
+        ):
+            st.session_state["authenticated"] = True
+            del st.session_state["password"]
+        else:
+            st.session_state["authenticated"] = False
+
+    if "authenticated" not in st.session_state:
+        st.text_input("Username", key="username")
+        st.text_input("Password", key="password", type="password", on_change=verify)
+        st.stop()
+
+    if not st.session_state["authenticated"]:
+        st.error("❌ Incorrect username or password")
+        st.text_input("Username", key="username")
+        st.text_input("Password", key="password", type="password", on_change=verify)
+        st.stop()
+
+# 🛑 Stop the app unless login is correct
+check_password()
 import fitz  # PyMuPDF library for PDFs
 import docx  # python-docx library for Word docs
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -202,3 +230,4 @@ if st.session_state.results:
 
 else:
     st.info("Upload your PDF and DOCX files and click 'Analyze Documents' to begin.")
+
