@@ -15,46 +15,6 @@
 # 6. Run the command:
 #    streamlit run app.py
 import streamlit as st
-from datetime import datetime, timedelta
-
-# ---------------------------------
-# 🔐 LOGIN WITH 4-HOUR SESSION
-# ---------------------------------
-
-SESSION_DURATION_HOURS = 4
-
-def check_password():
-    now = datetime.now()
-
-    # 1. Already logged in AND still valid?
-    if "authenticated" in st.session_state and "auth_time" in st.session_state:
-        if now - st.session_state["auth_time"] < timedelta(hours=SESSION_DURATION_HOURS):
-            return True
-        else:
-            # Expired → logout
-            st.session_state["authenticated"] = False
-
-    # 2. Show login form
-    st.title("🔐 Secure Login")
-    st.text_input("Username", key="username")
-    st.text_input("Password", key="password", type="password")
-
-    if st.button("Login"):
-        if (
-            st.session_state.get("username") == st.secrets["login"]["username"]
-            and st.session_state.get("password") == st.secrets["login"]["password"]
-        ):
-            st.session_state["authenticated"] = True
-            st.session_state["auth_time"] = now
-            st.rerun()
-        else:
-            st.error("❌ Incorrect username or password")
-            return False
-
-    st.stop()
-
-# Run login system
-check_password()
 import fitz  # PyMuPDF library for PDFs
 import docx  # python-docx library for Word docs
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -241,6 +201,7 @@ if st.session_state.results:
 
 else:
     st.info("Upload your PDF and DOCX files and click 'Analyze Documents' to begin.")
+
 
 
 
