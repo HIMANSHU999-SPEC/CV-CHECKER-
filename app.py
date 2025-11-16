@@ -15,34 +15,41 @@
 # 6. Run the command:
 #    streamlit run app.py
 import streamlit as st
+from datetime import datetime, timedelta
 
 # -----------------------------
-# 🔐 SIMPLE LOGIN (NO CHANGES TO YOUR CODE)
+# 🔐 LOGIN WITH 4-HOUR REMEMBER
 # -----------------------------
 def check_password():
-    """Secure login using Streamlit secrets."""
     def verify():
         if (
             st.session_state.get("username") == st.secrets["login"]["username"]
             and st.session_state.get("password") == st.secrets["login"]["password"]
         ):
             st.session_state["authenticated"] = True
+            st.session_state["auth_time"] = datetime.now()
             del st.session_state["password"]
         else:
             st.session_state["authenticated"] = False
 
-    if "authenticated" not in st.session_state:
-        st.text_input("Username", key="username")
-        st.text_input("Password", key="password", type="password", on_change=verify)
-        st.stop()
+    # 🟢 STEP 1: If user is already logged in AND within 4 hours → allow
+    if st.session_state.get("authenticated"):
+        login_time = st.session_state.get("auth_time")
+        if login_time and datetime.now() - login_time < timedelta(hours=4):
+            return True
+        else:
+            # Expired → force re-login
+            st.session_state["authenticated"] = False
 
-    if not st.session_state["authenticated"]:
-        st.error("❌ Incorrect username or password")
-        st.text_input("Username", key="username")
-        st.text_input("Password", key="password", type="password", on_change=verify)
+    # 🟡 STEP 2: Ask for login
+    st.text_input("Username", key="username")
+    st.text_input("Password", key="password", type="password", on_change=verify)
+    
+    if not st.session_state.get("authenticated"):
         st.stop()
+    return True
 
-# 🛑 Stop the app unless login is correct
+# STOP APP UNTIL LOGIN IS VALID
 check_password()
 import fitz  # PyMuPDF library for PDFs
 import docx  # python-docx library for Word docs
@@ -230,4 +237,5 @@ if st.session_state.results:
 
 else:
     st.info("Upload your PDF and DOCX files and click 'Analyze Documents' to begin.")
+
 
