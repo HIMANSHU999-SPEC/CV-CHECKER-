@@ -18,51 +18,43 @@ import streamlit as st
 from datetime import datetime, timedelta
 
 # ---------------------------------
-# 🔐 LOGIN WITH 4-HOUR PERSISTENT COOKIE
+# 🔐 LOGIN WITH 4-HOUR SESSION
 # ---------------------------------
 
-COOKIE_NAME = "laat_cvchecker_login"
-COOKIE_DURATION_HOURS = 4
+SESSION_DURATION_HOURS = 4
 
-def save_login_cookie():
-    expire_time = datetime.utcnow() + timedelta(hours=COOKIE_DURATION_HOURS)
-    st.session_state["authenticated"] = True
-    st.session_state["auth_expiry"] = expire_time.isoformat()
-    st.experimental_set_cookie(COOKIE_NAME, expire_time.isoformat(), expires=expire_time)
+def check_password():
+    now = datetime.now()
 
-def is_logged_in():
-    cookie = st.experimental_get_cookie(COOKIE_NAME)
-    if cookie:
-        try:
-            cookie_time = datetime.fromisoformat(cookie)
-            if datetime.utcnow() < cookie_time:
-                st.session_state["authenticated"] = True
-                st.session_state["auth_expiry"] = cookie
-                return True
-        except:
-            return False
-    return False
+    # 1. Already logged in AND still valid?
+    if "authenticated" in st.session_state and "auth_time" in st.session_state:
+        if now - st.session_state["auth_time"] < timedelta(hours=SESSION_DURATION_HOURS):
+            return True
+        else:
+            # Expired → logout
+            st.session_state["authenticated"] = False
 
-def login_screen():
+    # 2. Show login form
     st.title("🔐 Secure Login")
     st.text_input("Username", key="username")
-    st.text_input("Password", type="password", key="password")
+    st.text_input("Password", key="password", type="password")
 
     if st.button("Login"):
         if (
             st.session_state.get("username") == st.secrets["login"]["username"]
             and st.session_state.get("password") == st.secrets["login"]["password"]
         ):
-            save_login_cookie()
+            st.session_state["authenticated"] = True
+            st.session_state["auth_time"] = now
             st.rerun()
         else:
             st.error("❌ Incorrect username or password")
+            return False
 
-
-# 🔓 Check login status
-if not is_logged_in():
-    login_screen()
     st.stop()
+
+# Run login system
+check_password()
 import fitz  # PyMuPDF library for PDFs
 import docx  # python-docx library for Word docs
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -249,6 +241,7 @@ if st.session_state.results:
 
 else:
     st.info("Upload your PDF and DOCX files and click 'Analyze Documents' to begin.")
+
 
 
 
